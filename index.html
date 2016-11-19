@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:url" content="https://b8b18f49-0ee0-4-231-b9ee.azurewebsites.net/"/>
+    <meta property="og:title" content="My Cognitive App"/>
+    <meta property="og:description" content="내용"/>
+    <meta property="og:image" content="이미지 경로"/>
+    <link rel="stylesheet" type="text/css" href="demo.css">
+    <title>Emotion API DEMO</title>
+
+    <!-- bootstrap CDN -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <!--jquery-->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+<body style="background-color: #add8e6;">
+<div class="container">
+    <div style="
+            font-weight: bold; font-size:6.5em; font-family: '10X10 Bold'; text-align: center; color: #FA8072;
+            background-image: url(sponsor.png);
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-position: 800px 140px;
+            height: 200px;
+            width: 100%;"> Emotion API App
+    </div>
+</div>
+<div class="col-xs-12 col-md-12">
+<div class="filebox">
+    <form enctype="multipart/form-data" action="" id="form" method="POST">
+    <!-- 서버로 전송해줄 것이기 때문에 form tag 사용 -->
+        <input type="hidden" name="MAX_FILE_SIZE" value="30000000">
+        <input type="file" id="input" name="userfile">
+        <label for="input">사진 선택</label>
+    </form>
+
+</div>
+</div>
+
+<div class="col-xs-12 col-md-12">
+<div class="canvas">
+    <canvas style="alignment: center;" id="myCanvas" width="1000" height="800"></canvas>
+     <!--   <canvas> 태그로 출력 영역을 지정하며 자바스크립트의 그리기 메서드를 호출하여 캔버스 영역에 원하는 그림을 그린다.
+            API를 이용하려면 서버에 보내는 사진의 크기와 웹에 띄워야 할 사진의 크기가 정확히 일치해야 한다.
+            그러므로 Canvas 크기와 아래 drawImage 부분에 사이즈를 적절히 지정해 주자. -->
+</div>
+</div>
+
+<script src="ImageTools.js"></script>
+<!-- image resize를 위한 js파일 -->
+
+<script>
+    var canvas = document.getElementById('myCanvas');
+    //canvas라는 변수를 만들어서 "mycanvas" id를 가진 태그(canvas)의 값을 가져온다.
+    var ctx = canvas.getContext('2d');
+    var upload = document.getElementById('input');
+    //upload 변수에 input아이디를 가진 인풋 태그의 값을 가져온다.
+    var img = new Image();
+    //img 변수에 image객체를 정의한다.
+    var filename = null;
+    // filename 변수에 null값을 넣어준다. null = 객체 값이 존재하지 않음
+    var fullPathName = "AZURE_WEB_APP_URL";
+    // fulPathName 변수에 현재 만든 Web App의 url을 넣어준다. 나중에 업로드한 파일을 불러올때 필요하다.
+    var form = document.getElementById('form');
+    // form 변수에 form 태그의 값을 가져온다.
+
+    var emotion = {
+        0: "anger",
+        1: "contempt",
+        2: "disgust",
+        3: "fear",
+        4: "happiness",
+        5: "neutral",
+        6: "sadness",
+        7: "surprise"
+    };
+    // emotion이라는 배열을 만들어서 감정을 넣어준다.
+
+    var imgPath;
+    var imgBlob;
+
+    var emotionImage = new Array(8);
+    //길이가 8인 배열을 만든다
+
+    for (i = 0; i < emotionImage.length; i++) {
+        emotionImage[i] = new Image();
+        emotionImage[i].src = fullPathName + emotion[i] + ".png";
+    }
+     /* i값이 emotionImage 배열의 길이만큼까지 증가하면서 emotionImage 배열에 하나씩 새로운 이미지 객체를 정의해준다. 또 이미지 객체에 fullPathName과 숫자(key)에 맞는 감정(value)값 그리고 사진파일 형식을 붙혀서 넣어준다.
+    web app에 미리 넣어둔 이모티콘의 이미지 url을 여기서 지정해 준것이다.
+    ex)https://976e148f-0ee0-4-231-b9ee.azurewebsites.net/anger.png
+    */
+
+
+    form.onchange = function (e) {
+        if (img.src.length > 10)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ImageTools.resize(e.target.files[0], {
+            width: 800,
+            height: 600
+        }, function (blob, didItResize) {
+            imgBlob = blob;
+            img.src = URL.createObjectURL(imgBlob);
+        })
+    };
+    //form tag에 onchange 이벤트(객체안의 내용이 바뀌고)가 발생했을 때 img객체에 url을 지정해 준다. e == event 자바스크립트 전역객체
+    /* Blob는 Binary Large Objects의 약자로 “대용량 바이너리 객체”쯤으로 해석할 수 있다. 이름 그대로 이미지, 동영상 등 단순 텍스트 데이터가 아닌 바이너리 데이터를 담을 수 있는 객체이다. HTML5에 들어서면서 자바스크립트에서도 이러한 파일을 다루어야 할 필요성이 생겨 File API 명세에 정의되었다.*/
+
+
+    // 여기서부터 img가 로드되었을 때 실행되는 콜백함수
+    img.onload = function () {
+        $(document).ready(function(){
+            $('.canvas').width(img.width);
+            $('.canvas').height(img.height);
+        });
+
+        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+        // drawimage 함수를 사용하여 좌표 0.0부터 이미지 너비 높이를 지정하고 캔버스의 너비도 이미지와 같은 너비와 높이로 지정해준다.
+
+
+        //jquery(javascript 라이브러리 코드를 간편화 시켜줌) / 익명함수 'function() { };'를 실행하라로 해석
+        $(function () {
+
+            var form = $('form')[0];
+            // form이란 변수에 form tag값을 가져옴(객체로?) == document.getElementByTagName('form')
+            var fullPath = upload.value;
+            /* fullpath 변수에 가짜 주소를 넣어준다. 웹에서는 로컬경로가 필요없어서 저렇게 나온다.
+            ex) C:\fakepath\uploadimage.JPG */
+            if (fullPath) {
+                var startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+                /* 조건부 삼항 비교연산자 a ? b : c  a가 true면 b false면 c
+                indexOf() 인자가 몇번째인지, lastIndexOf() 인자가 있는곳에서 뒤에서 맨처음까지 수 */
+                filename = fullPath.substring(startIndex);
+                if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0)
+                    filename = filename.substring(1);
+            }// 가짜 주소부분에서 이미지의 이름만 가져온다. ex)uploadimage.JPG
+
+            imgPath = fullPathName;
+            imgPath += filename;
+             /* imgPath에 fullPathName과 filename의 값을 더해준다.
+            ex) https://976e148f-0ee0-4-231-b9ee.azurewebsites.net/uploadimage.JPG */
+
+            var formData = new FormData(form);
+            formData.append("userfile", imgBlob, filename);
+            // var formData = new FormData(); formdata 변수에 form객체를 담아준다.
+            // 왜 formData = new FormData(); 빈 폼에서는 안 되는 걸까?
+            // -> 빈 폼은 enctype이 설정돼있지 않기 때문.
+            $.ajax({
+                url: './upload.php',
+                processData: false,
+                contentType: false,
+                data: formData,
+                type: 'POST'
+            })
+
+                    //Emotion API
+                    .done(function () {
+                        $.ajax({
+                            url: "https://api.projectoxford.ai/emotion/v1.0/recognize?",
+                            beforeSend: function (xhrObj) {
+                                xhrObj.setRequestHeader("Content-Type", "application/json");
+                                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key", "EMOTION_API_KEY");
+                            }, //Emotion API key값 넣음
+                            type: "POST",
+                            data: "{" +
+                            "\"url\":\"" + imgPath + "\"}"
+                        })
+                          //실습영역
+                                .fail(function (response) {
+                                    alert(JSON.stringify(response));
+                                });
+                    });
+        });
+    };
+</script>
+</div>
+</body>
+</html>
