@@ -2,10 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta property="og:url" content="https://b8b18f49-0ee0-4-231-b9ee.azurewebsites.net/"/>
-    <meta property="og:title" content="My Cognitive App"/>
-    <meta property="og:description" content="내용"/>
-    <meta property="og:image" content="이미지 경로"/>
     <link rel="stylesheet" type="text/css" href="demo.css">
     <title>Emotion API DEMO</title>
 
@@ -24,6 +20,7 @@
 </head>
 <body style="background-color: #add8e6;">
 <div class="container">
+    <div class="col-xs-12 col-md-12">
     <div style="
             font-weight: bold; font-size:6.5em; font-family: '10X10 Bold'; text-align: center; color: #FA8072;
             background-image: url(sponsor.png);
@@ -34,6 +31,7 @@
             width: 100%;"> Emotion API App
     </div>
 </div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <div class="col-xs-12 col-md-12">
 <div class="filebox">
     <form enctype="multipart/form-data" action="" id="form" method="POST">
@@ -41,10 +39,12 @@
         <input type="hidden" name="MAX_FILE_SIZE" value="30000000">
         <input type="file" id="input" name="userfile">
         <label for="input">사진 선택</label>
-    </form>
-
+    </form>   
 </div>
 </div>
+<div class="col-xs-12 col-md-12">
+        <p id="tags"></p>
+    </div>
 
 <div class="col-xs-12 col-md-12">
 <div class="canvas">
@@ -174,7 +174,31 @@
                             data: "{" +
                             "\"url\":\"" + imgPath + "\"}"
                         })
-                          //실습영역
+                                .done(function (response) {
+                                    for (i = 0; i < response.length; i++) {
+                                    
+                                        var emotionArray = Object.keys(response[i]['scores']).map(function (key) {
+                                            return parseFloat(response[i]['scores'][key]);
+                                        });
+                                        
+                                        var maxEmotion = emotionArray.reduce((iMax, x, i, emotionArray) => x > emotionArray[iMax] ? i : iMax, 0);
+                                        
+
+                                        var top = response[i]['faceRectangle'].top;
+                                        var left = response[i]['faceRectangle'].left;
+                                        var width = response[i]['faceRectangle'].width;
+                                        var height = response[i]['faceRectangle'].height;
+
+                                        ctx.drawImage(emotionImage[maxEmotion], 0, 0, emotionImage[maxEmotion].width, emotionImage[maxEmotion].height, left - 5, top - 10, width, height);
+                                       
+
+                                        ctx.beginPath();
+                                        ctx.lineWidth = "6";
+                                        ctx.strokeStyle = "red";
+                                        ctx.rect(left, top, width, height);
+                                        ctx.stroke();
+                                    }
+                                })
                                 .fail(function (response) {
                                     alert(JSON.stringify(response));
                                 });
